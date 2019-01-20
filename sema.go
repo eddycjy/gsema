@@ -16,7 +16,9 @@ func NewSemaphore(maxSize int) *Semaphore {
 
 func (s *Semaphore) Add(delta int) {
 	s.wg.Add(delta)
-	s.c <- struct{}{}
+	for i := 0; i < delta; i++ {
+		s.c <- struct{}{}
+	}
 }
 
 func (s *Semaphore) Done() {
