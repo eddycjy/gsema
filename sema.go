@@ -1,6 +1,8 @@
 package gsema
 
-import "sync"
+import (
+	"sync"
+)
 
 type Semaphore struct {
 	c  chan struct{}
@@ -15,9 +17,15 @@ func NewSemaphore(maxSize int) *Semaphore {
 }
 
 func (s *Semaphore) Add(delta int) {
-	s.wg.Add(delta)
-	for i := 0; i < delta; i++ {
-		s.c <- struct{}{}
+	if delta < 0 {
+		for i := delta; i < 0; i++ {
+			s.Done()
+		}
+	} else if delta > 0 {
+		for i := 0; i < delta; i++ {
+			s.c <- struct{}{}
+			s.wg.Add(1)
+		}
 	}
 }
 
@@ -28,4 +36,10 @@ func (s *Semaphore) Done() {
 
 func (s *Semaphore) Wait() {
 	s.wg.Wait()
+}
+
+func (s *Semaphore) Close() {
+	if len(s.c) == 0 {
+		close(s.c)
+	}
 }
